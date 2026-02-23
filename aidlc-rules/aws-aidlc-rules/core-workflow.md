@@ -47,6 +47,19 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
 3. This should only be done ONCE at the start of a new workflow
 4. Do NOT load this file in subsequent interactions to save context space
 
+## MANDATORY: Extension Content Injection at Every Stage
+**CRITICAL**: After extensions are enabled during Extension Discovery (which runs immediately after Workspace Detection), you MUST check enabled extensions at EVERY stage throughout the entire workflow.
+
+**At each stage**:
+1. Check `aidlc-docs/enabled-extensions.md` for the list of enabled extensions
+2. For each enabled extension, read its `rule-manifest.yaml` to check if it has an `applies_to` entry for the current stage
+3. If it does, read the referenced content file and apply it (append/prepend per the `action` field) as additional guidance alongside core stage content
+4. Cite extension sources when applying specific guidance: *(Source: [extension-name]/[filename])*
+5. Extensions ADD to core guidance — they never replace it
+6. If multiple extensions apply to the same stage, apply them in `priority` order (lower number first)
+
+**This applies to ALL stages**: Requirements Analysis, User Stories, Workflow Planning, Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation, Build and Test.
+
 # Adaptive Software Development Workflow
 
 ---
@@ -59,6 +72,7 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
 
 **Stages in INCEPTION PHASE**:
 - Workspace Detection (ALWAYS)
+- Extension Discovery and Selection (ALWAYS)
 - Reverse Engineering (CONDITIONAL - Brownfield only)
 - Requirements Analysis (ALWAYS - Adaptive depth)
 - User Stories (CONDITIONAL)
@@ -80,7 +94,43 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
 4. Determine next phase: Reverse Engineering (if brownfield and no artifacts) OR Requirements Analysis
 5. **MANDATORY**: Log findings in audit.md
 6. Present completion message to user (see workspace-detection.md for message formats)
-7. Automatically proceed to next phase
+7. Automatically proceed to Extension Discovery
+
+## Extension Discovery and Selection (ALWAYS EXECUTE)
+
+**Purpose**: Discover and enable extensions BEFORE any analysis begins, so all subsequent stages benefit from extension guidance.
+
+**Execution**:
+1. **MANDATORY**: Scan `.aidlc-rule-details/extensions/_registry.md` for available extensions
+2. Check if `aidlc-docs/enabled-extensions.md` already exists with pre-enabled extensions
+3. For each extension, read its `rule-manifest.yaml` and check trigger conditions against the user's request and workspace context
+4. Present available extensions to the user:
+
+```markdown
+🔌 **Available Extensions**
+
+Based on your project, I suggest:
+
+| Extension | Description | Recommendation |
+|-----------|-------------|---------------|
+| [name] | [description] | Suggested / Available |
+
+You can:
+- ✅ Enable suggested extensions
+- ➕ Enable additional extensions
+- ⏭️ Skip all extensions and proceed
+
+Which extensions would you like to enable?
+```
+
+5. **Wait for user selection**
+6. **Execute enabled extension logic for this stage**: For each enabled extension that has an `applies_to` entry for `workflow-planning` (or equivalent setup stage), load and execute its instructions now. This is where skills like `extension-generator` run — they research standards, ask scoping questions, and generate extension folders.
+7. **If `user-provided-rules` is enabled**: Collect rule folder paths, scan and classify files, present classification for approval. See `.aidlc-rule-details/extensions/user-provided-rules/overview.md` for details.
+8. Save enabled extensions to `aidlc-docs/enabled-extensions.md`
+9. **MANDATORY**: Log extension selections and any generated extensions in `audit.md`
+10. Automatically proceed to next phase (Reverse Engineering or Requirements Analysis)
+
+**After this stage, all enabled extensions are active and will inject content at every subsequent stage.**
 
 ## Reverse Engineering (CONDITIONAL - Brownfield Only)
 
@@ -209,19 +259,15 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
    - Intent analysis
    - Requirements (if executed)
    - User stories (if executed)
-5. **MANDATORY**: Execute Extension Discovery (Step 1.5 in workflow-planning.md):
-   - Scan `.aidlc-rule-details/extensions/` for available extensions
-   - Present extensions to user for selection
-   - Execute enabled extension logic (e.g., extension-generator skill runs here)
-   - Collect user-provided rules if that extension is enabled
-6. Execute workflow planning:
+   - Enabled extensions (from Extension Discovery stage)
+5. Execute workflow planning:
    - Determine which phases to execute
    - Determine depth level for each phase
    - Create multi-package change sequence (if brownfield)
    - Generate workflow visualization (VALIDATE Mermaid syntax before writing)
-7. **MANDATORY**: Validate all content before file creation per content-validation.md rules
-8. **Wait for Explicit Approval**: Present recommendations using language from workflow-planning.md Step 9, emphasizing user control to override recommendations - DO NOT PROCEED until user confirms
-9. **MANDATORY**: Log user's response in audit.md with complete raw input
+6. **MANDATORY**: Validate all content before file creation per content-validation.md rules
+7. **Wait for Explicit Approval**: Present recommendations using language from workflow-planning.md Step 9, emphasizing user control to override recommendations - DO NOT PROCEED until user confirms
+8. **MANDATORY**: Log user's response in audit.md with complete raw input
 
 ## Application Design (CONDITIONAL)
 
@@ -282,8 +328,6 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
 - Build and Test (ALWAYS - after all units complete)
 
 **Note**: Each unit is completed fully (design + code) before moving to the next unit.
-
-**MANDATORY: Extension Content Injection**: At EACH construction stage below, after loading the core stage file, also check all enabled extensions. For each extension that has an `applies_to` entry for the current stage, read the referenced content file and apply it (append/prepend) as additional guidance alongside core content. Extensions ADD to core guidance — they never replace it.
 
 ---
 

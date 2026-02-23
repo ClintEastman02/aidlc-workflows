@@ -13,13 +13,14 @@
 • **OPERATIONS PHASE**: Placeholder for future deployment and monitoring workflows
 
 ## The Adaptive Workflow:
-• **Workspace Detection** (always) → **Reverse Engineering** (brownfield only) → **Requirements Analysis** (always, adaptive depth) → **Conditional Phases** (as needed) → **Workflow Planning** (always) → **Code Generation** (always, per-unit) → **Build and Test** (always)
+• **Workspace Detection** (always) → **Extension Discovery** (always) → **Reverse Engineering** (brownfield only) → **Requirements Analysis** (always, adaptive depth) → **Conditional Phases** (as needed) → **Workflow Planning** (always) → **Code Generation** (always, per-unit) → **Build and Test** (always)
 
 ## How It Works:
 • **AI analyzes** your request, workspace, and complexity to determine which stages are needed
-• **These stages always execute**: Workspace Detection, Requirements Analysis (adaptive depth), Workflow Planning, Code Generation (per-unit), Build and Test
+• **These stages always execute**: Workspace Detection, Extension Discovery, Requirements Analysis (adaptive depth), Workflow Planning, Code Generation (per-unit), Build and Test
 • **All other stages are conditional**: Reverse Engineering, User Stories, Application Design, Units Generation, per-unit design stages (Functional Design, NFR Requirements, NFR Design, Infrastructure Design)
 • **No fixed sequences**: Stages execute in the order that makes sense for your specific task
+• **Extensions are discovered early**: Right after Workspace Detection, so all subsequent stages benefit from compliance/standard guidance
 
 ## Your Team's Role:
 • **Answer questions** in dedicated question files using [Answer]: tags with letter choices (A, B, C, D, E)
@@ -36,6 +37,7 @@ flowchart TD
     
     subgraph INCEPTION["🔵 INCEPTION PHASE"]
         WD["Workspace Detection<br/><b>ALWAYS</b>"]
+        ED["Extension Discovery<br/><b>ALWAYS</b>"]
         RE["Reverse Engineering<br/><b>CONDITIONAL</b>"]
         RA["Requirements Analysis<br/><b>ALWAYS</b>"]
         Stories["User Stories<br/><b>CONDITIONAL</b>"]
@@ -58,8 +60,9 @@ flowchart TD
     end
     
     Start --> WD
-    WD -.-> RE
-    WD --> RA
+    WD --> ED
+    ED -.-> RE
+    ED --> RA
     RE --> RA
     
     RA -.-> Stories
@@ -85,6 +88,7 @@ flowchart TD
     BT --> End(["Complete"])
     
     style WD fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style ED fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style RA fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style WP fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
 
@@ -113,11 +117,12 @@ flowchart TD
 
 **🔵 INCEPTION PHASE** - Planning and Architecture
 - Workspace Detection: Analyze workspace state and project type (ALWAYS)
+- Extension Discovery: Scan, present, and enable extensions — including generating compliance extensions via the extension-generator skill (ALWAYS)
 - Reverse Engineering: Analyze existing codebase (CONDITIONAL - Brownfield only)
-- Requirements Analysis: Gather and validate requirements (ALWAYS - Adaptive depth)
-- User Stories: Create user stories and personas (CONDITIONAL)
+- Requirements Analysis: Gather and validate requirements, with extension content injected (ALWAYS - Adaptive depth)
+- User Stories: Create user stories and personas, with extension acceptance criteria injected (CONDITIONAL)
 - Workflow Planning: Create execution plan (ALWAYS)
-- Application Design: High-level component identification and service layer design (CONDITIONAL)
+- Application Design: High-level component identification and service layer design, with extension constraints injected (CONDITIONAL)
 - Units Generation: Decompose into units of work (CONDITIONAL)
 
 **🟢 CONSTRUCTION PHASE** - Design, Implementation, Build and Test
