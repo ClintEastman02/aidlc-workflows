@@ -1,0 +1,23 @@
+name: "extension-generator"
+version: "2.0.0"
+displayName: "Extension Generator Skill"
+description: "IDE-agnostic skill that researches compliance standards using available tools (web search, fetch, MCP servers) and generates complete AI-DLC extension folders"
+author: "AI-DLC Team"
+category: "process"
+
+triggers:
+  suggest_when:
+    - has_requirements_keyword: ["compliance", "hipaa", "gdpr", "fedramp", "pci", "sox", "nist", "iso", "regulation", "standard", "soc2", "ccpa"]
+  always_available: true
+  auto_enable: false
+
+applies_to:
+  inception:
+    - stage: "workflow-planning"
+      file: "generator-workflow.md"
+      action: "append"
+
+priority: 5
+conflicts_with: []
+depends_on: []
+tags: ["generator", "skill", "compliance", "standards", "research", "web-search", "ide-agnostic"]

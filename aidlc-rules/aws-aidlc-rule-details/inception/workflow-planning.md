@@ -20,6 +20,58 @@
 - stories.md
 - personas.md
 
+## Step 1.5: Extension Discovery and Selection
+
+**MANDATORY**: Before proceeding with scope analysis, scan for available extensions.
+
+### 1.5.1 Scan Available Extensions
+1. Read `.aidlc-rule-details/extensions/_registry.md` for the list of available extensions
+2. Check if `aidlc-docs/enabled-extensions.md` exists with pre-enabled extensions
+3. For each extension in the registry, read its `rule-manifest.yaml` to check trigger conditions against the current project context (project type, requirements keywords, languages detected)
+
+### 1.5.2 Present Extensions to User
+Present available extensions with recommendations:
+
+```markdown
+🔌 **Available Extensions**
+
+Based on your project, I suggest:
+
+| Extension | Description | Recommendation |
+|-----------|-------------|---------------|
+| [name] | [description] | Suggested / Available |
+
+You can:
+- ✅ Enable suggested extensions
+- ➕ Enable additional extensions
+- ⏭️ Skip all extensions and proceed
+
+Which extensions would you like to enable?
+```
+
+### 1.5.3 Execute Enabled Extension Logic
+For each enabled extension, load its content file for the `workflow-planning` stage (if it has one) and execute its instructions. This is where skills like `extension-generator` run — they ask questions, research standards, and generate extension folders during this step.
+
+### 1.5.4 User-Provided Rules Collection (If Enabled)
+
+**Execute IF**: The `user-provided-rules` extension is enabled.
+
+**Skip IF**: The `user-provided-rules` extension is not enabled.
+
+1. Ask the user which folder(s) contain their custom rules, standards, or compliance guidelines
+2. Accept one or more folder paths (relative to workspace root or absolute)
+3. Validate that the folders exist and contain readable files
+4. Recursively read all supported files (`.md`, `.yaml`, `.yml`, `.txt`, `.json`) in each folder
+5. Classify each file's content by which AI-DLC phase(s) it applies to
+6. Generate `aidlc-docs/user-provided-rules-summary.md` with the classification
+7. Present the summary to the user for review
+8. Wait for user approval before proceeding
+9. Log the interaction in `audit.md`
+
+**See**: `.aidlc-rule-details/extensions/user-provided-rules/overview.md` for complete process details.
+
+---
+
 ## Step 2: Detailed Scope and Impact Analysis
 
 **Now that we have complete context (requirements + stories), perform detailed analysis:**

@@ -209,14 +209,19 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
    - Intent analysis
    - Requirements (if executed)
    - User stories (if executed)
-5. Execute workflow planning:
+5. **MANDATORY**: Execute Extension Discovery (Step 1.5 in workflow-planning.md):
+   - Scan `.aidlc-rule-details/extensions/` for available extensions
+   - Present extensions to user for selection
+   - Execute enabled extension logic (e.g., extension-generator skill runs here)
+   - Collect user-provided rules if that extension is enabled
+6. Execute workflow planning:
    - Determine which phases to execute
    - Determine depth level for each phase
    - Create multi-package change sequence (if brownfield)
    - Generate workflow visualization (VALIDATE Mermaid syntax before writing)
-6. **MANDATORY**: Validate all content before file creation per content-validation.md rules
-7. **Wait for Explicit Approval**: Present recommendations using language from workflow-planning.md Step 9, emphasizing user control to override recommendations - DO NOT PROCEED until user confirms
-8. **MANDATORY**: Log user's response in audit.md with complete raw input
+7. **MANDATORY**: Validate all content before file creation per content-validation.md rules
+8. **Wait for Explicit Approval**: Present recommendations using language from workflow-planning.md Step 9, emphasizing user control to override recommendations - DO NOT PROCEED until user confirms
+9. **MANDATORY**: Log user's response in audit.md with complete raw input
 
 ## Application Design (CONDITIONAL)
 
@@ -277,6 +282,8 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
 - Build and Test (ALWAYS - after all units complete)
 
 **Note**: Each unit is completed fully (design + code) before moving to the next unit.
+
+**MANDATORY: Extension Content Injection**: At EACH construction stage below, after loading the core stage file, also check all enabled extensions. For each extension that has an `applies_to` entry for the current stage, read the referenced content file and apply it (append/prepend) as additional guidance alongside core content. Extensions ADD to core guidance — they never replace it.
 
 ---
 
