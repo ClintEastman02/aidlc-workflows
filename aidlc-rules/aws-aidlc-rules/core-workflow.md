@@ -107,28 +107,28 @@ This directory is used consistently across all platforms (Cline, Kiro CLI, Amazo
 4. Present available extensions to the user:
 
 ```markdown
-🔌 **Available Extensions**
+**Extensions Available**
 
 Based on your project, I suggest:
 
-| Extension | Description | Recommendation |
-|-----------|-------------|---------------|
-| [name] | [description] | Suggested / Available |
+| # | Extension | Description | Status |
+|---|-----------|-------------|--------|
+| 1 | [name] | [description] | Suggested |
+| 2 | [name] | [description] | Available |
 
-You can:
-- ✅ Enable suggested extensions
-- ➕ Enable additional extensions
-- ⏭️ Skip all extensions and proceed
+Options:
+- A) Enable all suggested extensions
+- B) Let me pick which ones to enable (list numbers)
+- C) Skip extensions, proceed without
 
-Which extensions would you like to enable?
+[Answer]:
 ```
 
 5. **Wait for user selection**
-6. **Execute enabled extension logic for this stage**: For each enabled extension that has an `applies_to` entry for `workflow-planning` (or equivalent setup stage), load and execute its instructions now. This is where skills like `extension-generator` run — they research standards, ask scoping questions, and generate extension folders.
-7. **If `user-provided-rules` is enabled**: Collect rule folder paths, scan and classify files, present classification for approval. See `.aidlc-rule-details/extensions/user-provided-rules/overview.md` for details.
-8. Save enabled extensions to `aidlc-docs/enabled-extensions.md`
-9. **MANDATORY**: Log extension selections and any generated extensions in `audit.md`
-10. Automatically proceed to next phase (Reverse Engineering or Requirements Analysis)
+6. **Execute enabled extension logic**: For each enabled extension that has an `applies_to` entry for `workflow-planning`, load and execute its instructions now. This is where the `extension-generator` skill runs — it asks what the user needs (name a standard, point to existing docs, or describe rules), researches, and generates structured extension folders.
+7. Save enabled extensions to `aidlc-docs/enabled-extensions.md`
+8. **MANDATORY**: Log extension selections and any generated extensions in `audit.md`
+9. Automatically proceed to next phase (Reverse Engineering or Requirements Analysis)
 
 **After this stage, all enabled extensions are active and will inject content at every subsequent stage.**
 

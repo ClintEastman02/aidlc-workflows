@@ -5,17 +5,11 @@ Extensions add domain-specific rules to AI-DLC phases. They are discovered autom
 ## Installed Extensions
 
 ### extension-generator (v2.0.0)
-IDE-agnostic skill that researches compliance standards using available tools (web search, fetch, MCP servers) then generates a complete extension folder. Works across all supported AI-DLC platforms.
+IDE-agnostic skill that generates structured AI-DLC extensions from any compliance standard, security framework, or custom ruleset. Three input modes: name a standard (AI researches and generates), point to existing rule docs (AI reads and structures), or describe your rules (AI generates from description).
 - **Category**: process | **Priority**: 5
 - **Stages**: Workflow Planning (researches + generates extensions covering all stages)
 - **Auto-suggested**: When compliance/standard keywords detected
 - **Research**: Uses web search, URL fetch, MCP tools (whatever is available) to get latest requirements
-
-### user-provided-rules (v1.0.0)
-Points to user's existing rule folders. AI scans, classifies by phase, and injects at each stage.
-- **Category**: quality | **Priority**: 10
-- **Stages**: All Inception + Construction stages
-- **Auto-suggested**: Always available, user opts in with folder paths
 
 ## How Extensions Work
 
@@ -28,5 +22,4 @@ Points to user's existing rule folders. AI scans, classifies by phase, and injec
 
 ## Creating Extensions
 
-Each extension needs: `rule-manifest.yaml` (required) + content `.md` files per stage.
-See `EXTENSION-AUTHORING-GUIDE.md` in the repository root for full documentation.
+Use the `extension-generator` skill to create extensions automatically, or create manually with: `rule-manifest.yaml` (required) + content `.md` files per stage.

@@ -58,6 +58,126 @@ For the standard the user names, attempt these in order:
 
 Present categories (Healthcare, Financial, Government, Privacy, Security, Industry, Internal/Custom) and ask the user to name their standard. Accept any standard. Multiple standards = generate separate extensions for each.
 
+Also offer the option to provide existing documentation:
+
+```markdown
+**How would you like to create your extension?**
+
+- A) Name a standard (HIPAA, PCI-DSS, GDPR, SOC 2, etc.) — I'll research it and generate rules
+- B) Point me to folder(s) with your existing rule docs — I'll read them and generate a structured extension
+- C) Describe your custom rules — I'll generate an extension from your description
+
+[Answer]:
+```
+
+**If user chooses B (existing docs):**
+
+#### Where to put the files
+
+Users place their rule documents in a folder anywhere in their workspace. There is no required location, but we recommend:
+
+```
+<my-project>/
+├── .aidlc-rule-details/         # AI-DLC rules (already exists)
+├── aidlc-docs/                  # AI-DLC outputs (already exists)
+├── custom-rules/                # RECOMMENDED: put your rule docs here
+│   ├── hipaa/
+│   │   ├── data-protection.md
+│   │   └── access-control.md
+│   └── internal-standards/
+│       └── coding-guidelines.md
+└── [project code]
+```
+
+Any folder path works. The user provides the path(s) and the AI reads from there.
+
+#### What the AI reads
+
+Supported file types:
+- `.md` (Markdown) — preferred, best for structured rules
+- `.txt` (Plain text) — simple rule lists, policies
+- `.yaml` / `.yml` (YAML) — structured control definitions
+- `.json` (JSON) — structured rule data
+
+Skipped automatically:
+- Binary files (images, PDFs, compiled files)
+- Files larger than 100KB (flag to user, ask if they want to include)
+- Hidden files/folders (`.git`, `.DS_Store`, etc.)
+
+**Note on PDFs**: The AI cannot read PDF files directly. If the user's rules are in PDF format, ask them to convert to markdown first or paste the key content into `.md` files.
+
+#### Process for option B
+
+1. Ask for folder path(s):
+```markdown
+Where are your rule documents located? Provide one or more folder paths relative to your project root.
+
+Example: `custom-rules/hipaa/`, `custom-rules/internal-standards/`
+
+[Answer]:
+```
+
+2. Scan the folder(s) and list what was found:
+```markdown
+I found the following files:
+
+| # | File | Size | Type |
+|---|------|------|------|
+| 1 | custom-rules/hipaa/data-protection.md | 4KB | Markdown |
+| 2 | custom-rules/hipaa/access-control.md | 2KB | Markdown |
+| 3 | custom-rules/internal-standards/coding-guidelines.md | 6KB | Markdown |
+
+I'll now read these and analyze the content.
+```
+
+3. Read each file and build an understanding of: what standard/framework it covers, key control areas, scope, and which AI-DLC phases each rule maps to.
+
+4. **Ask clarifying questions** for anything ambiguous. Common situations that require clarification:
+
+```markdown
+I have a few questions about your rule documents:
+
+**Question DOC-1**: In `data-protection.md`, you mention "sensitive data must be encrypted." Which encryption standard should be used?
+- A) AES-256
+- B) AES-128
+- C) Whatever the cloud provider default is
+- D) It's specified elsewhere (please point me to it)
+
+[Answer]:
+
+**Question DOC-2**: Your `access-control.md` references "role-based access" but doesn't list the roles. Should I:
+- A) Define standard roles based on the framework (e.g., Admin, Clinician, Patient for HIPAA)
+- B) Leave role definitions for you to fill in later
+- C) The roles are defined in another document (please provide path)
+
+[Answer]:
+
+**Question DOC-3**: I found rules about testing in `coding-guidelines.md` and also in `access-control.md`. Should I:
+- A) Combine them into one testing section
+- B) Keep them separate (testing from each source applied independently)
+
+[Answer]:
+```
+
+Ask clarifying questions when:
+- A rule is vague or could be interpreted multiple ways
+- A rule references something not defined in the provided docs
+- Rules from different files appear to conflict
+- A rule's scope is unclear (does it apply to all code or just specific areas?)
+- Technical specifics are missing (which encryption algorithm, which auth protocol, etc.)
+
+5. Skip Step 2 (research) — the user's docs ARE the source
+6. Proceed to Step 3 (scoping questions) with the doc content as context, then Step 4 (generate)
+7. The generated extension cites the user's files as sources in `overview.md`
+
+**If user chooses C (describe rules):**
+1. Ask the user to describe their rules, standards, or guidelines
+2. Skip Step 2 (research)
+3. Proceed to Step 3 (scoping questions) with the description as context, then Step 4 (generate)
+
+**If user chooses A (name a standard):**
+Proceed to Step 2 (research) as normal.
+
 ### Step 2: Research the Standard
 
 Before asking scoping questions, research the standard using available tools:
@@ -611,6 +731,9 @@ When populating the templates above with actual standard content:
 - **Very broad standard** (e.g., NIST 800-53): Ask which control families are most relevant.
 - **Multiple standards**: Generate separate extensions for each, check for conflicts.
 - **Outdated research results**: Always include the research date and recommend periodic review.
+- **User docs are incomplete**: Ask clarifying questions for gaps. If critical information is missing, generate what's possible and note gaps in `overview.md` for the user to fill in.
+- **User docs contain contradictions**: Flag the contradiction, ask the user which rule takes precedence, document the resolution.
+- **User docs are in a language the AI can read but not a supported file type**: Ask the user to convert to a supported format or paste the content into a `.md` file.
 
 ---
 
