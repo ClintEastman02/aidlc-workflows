@@ -1,6 +1,23 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.1.5] - 2026-02-24
+
+
+### Documentation
+
+- update changelog for v0.1.4 (#88)
+## [0.1.4] - 2026-02-24
+
+
+### Bug Fixes
+
+- correct GitHub Copilot instructions and Kiro CLI rule-details path resolution (#82, #84) (#87)
+
+
+### Documentation
+
+- update changelog for v0.1.3 (#77)
 ## [0.1.3] - 2026-02-11
 
 
