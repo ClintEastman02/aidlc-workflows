@@ -1,13 +1,13 @@
 name: "extension-generator"
-version: "2.0.0"
-displayName: "Extension Generator Skill"
-description: "IDE-agnostic skill that researches compliance standards using available tools (web search, fetch, MCP servers) and generates complete AI-DLC extension folders"
+version: "3.0.0"
+displayName: "Extension Generator Skill (CCM-Anchored + General)"
+description: "IDE-agnostic skill that generates AI-DLC extensions for any ruleset — compliance frameworks via CCM v4.1 normalization, plus coding standards, business rules, architecture patterns, and team processes without CCM overhead"
 author: "AI-DLC Team"
 category: "process"
 
 triggers:
   suggest_when:
-    - has_requirements_keyword: ["compliance", "hipaa", "gdpr", "fedramp", "pci", "sox", "nist", "iso", "regulation", "standard", "soc2", "ccpa"]
+    - has_requirements_keyword: ["compliance", "hipaa", "gdpr", "fedramp", "pci", "sox", "nist", "iso", "regulation", "standard", "soc2", "ccpa", "lgpd", "ccm", "star", "csa", "owasp", "cis", "coding standard", "style guide", "business rule", "convention", "guidelines"]
   always_available: true
   auto_enable: false
 
@@ -20,4 +20,4 @@ applies_to:
 priority: 5
 conflicts_with: []
 depends_on: []
-tags: ["generator", "skill", "compliance", "standards", "research", "web-search", "ide-agnostic"]
+tags: ["generator", "skill", "compliance", "standards", "ccm", "coding-standards", "business-rules", "ide-agnostic"]

@@ -26,19 +26,35 @@ All subsequent rule detail file references (e.g., `common/process-overview.md`, 
 - Reference these throughout the workflow execution
 
 ## MANDATORY: Extensions Loading
-**CRITICAL**: At workflow start, scan the `extensions/` directory recursively for all `.md` files. These are extension rule files that apply as cross-cutting constraints across the entire workflow.
+**CRITICAL**: At workflow start, scan the `extensions/` directory for enabled extensions. **Do NOT load all extension content upfront** — this wastes context window. Instead, use lazy loading:
 
-**Loading process**:
-1. List all subdirectories under `extensions/` (e.g., `extensions/security/`, `extensions/compliance/`)
-2. Load every `.md` file found within those subdirectories
-3. Each extension file defines its own verification criteria and enforcement rules as cross-cutting constraints
+**Loading process (lightweight scan at startup)**:
+1. Read `extensions/_registry.md` for the list of installed extensions
+2. For each extension directory, read ONLY its `rule-manifest.yaml` (metadata: name, category, rule_type, applies_to stages, priority, tags)
+3. Build an in-memory index: which extensions apply to which stages
+4. Do NOT read any `.md` content files yet — those are loaded on-demand per stage
+
+**Exception — always-loaded extensions**: Extensions in `extensions/security/baseline/` (the security-baseline rules) are cross-cutting hard constraints that apply to EVERY stage. Load `security-baseline.md` at startup. All other extension content is deferred.
+
+**Per-stage content injection (on-demand loading)**:
+1. When entering a stage, check the in-memory index for extensions that have an `applies_to` entry for this stage
+2. For each matching extension, read ONLY the specific `.md` file referenced in the `applies_to` entry (e.g., at `code-generation` stage, read only `code-guidelines.md` — not `requirements.md`, `design.md`, or `overview.md`)
+3. Apply the content per the `action` field (append/prepend) alongside core stage content
+4. Cite extension sources: *(Source: [extension-name]/[filename])*
+5. After the stage completes, the extension content can be released from context — it is NOT needed in subsequent stages unless that stage also references it
+6. If multiple extensions apply to the same stage, load and apply them in `priority` order (lower number first)
+
+**What this means for context window**:
+- At startup: only manifests are loaded (~20-50 lines per extension, not hundreds)
+- At each stage: only the 1-2 relevant content files are loaded
+- After each stage: stage-specific extension content is released
+- A project with 5 extensions × 7 stage files = 35 files total, but only 1-3 are in context at any time
 
 **Enforcement**:
 - Extension rules are hard constraints, not optional guidance
-- At each stage, the model intelligently evaluates which extension rules are applicable based on the stage's purpose, the artifacts being produced, and the context of the work — enforce only those rules that are relevant
-- Rules that are not applicable to the current stage should be marked as N/A in the compliance summary (this is not a blocking finding)
+- At each stage, enforce only the rules from the loaded stage-specific file — do not evaluate rules from files not loaded for this stage
 - Non-compliance with any applicable enabled extension rule is a **blocking finding** — do NOT present stage completion until resolved
-- When presenting stage completion, include a summary of extension rule compliance (compliant/non-compliant/N/A per rule, with brief rationale for N/A determinations)
+- When presenting stage completion, include a compliance summary for the loaded extension rules (compliant/non-compliant/N/A per rule)
 
 **Conditional Enforcement**: Extensions may be conditionally enabled/disabled. See `inception/requirements-analysis.md` for the collection mechanism. Before enforcing any extension at ANY stage, check its `Enabled` status in `aidlc-docs/aidlc-state.md` under `## Extension Configuration`. Skip disabled extensions and log the skip in audit.md. Default to enforced if no configuration exists. Extensions without an `## Applicability Question` are always enforced.
 
@@ -68,15 +84,16 @@ All subsequent rule detail file references (e.g., `common/process-overview.md`, 
 4. Do NOT load this file in subsequent interactions to save context space
 
 ## MANDATORY: Extension Content Injection at Every Stage
-**CRITICAL**: After extensions are enabled during Extension Discovery (which runs immediately after Workspace Detection), you MUST check enabled extensions at EVERY stage throughout the entire workflow.
+**CRITICAL**: After extensions are enabled during Extension Discovery, the per-stage content injection described in "Extensions Loading" above applies at EVERY stage throughout the entire workflow.
 
-**At each stage**:
-1. Check `aidlc-docs/enabled-extensions.md` for the list of enabled extensions
-2. For each enabled extension, read its `rule-manifest.yaml` to check if it has an `applies_to` entry for the current stage
-3. If it does, read the referenced content file and apply it (append/prepend per the `action` field) as additional guidance alongside core stage content
-4. Cite extension sources when applying specific guidance: *(Source: [extension-name]/[filename])*
+**At each stage** (summary — see Extensions Loading for full details):
+1. Check the in-memory manifest index for extensions with `applies_to` entries for the current stage
+2. For each matching enabled extension, read ONLY the referenced `.md` file
+3. Apply content (append/prepend per `action` field) alongside core stage content
+4. Cite sources: *(Source: [extension-name]/[filename])*
 5. Extensions ADD to core guidance — they never replace it
-6. If multiple extensions apply to the same stage, apply them in `priority` order (lower number first)
+6. Apply in `priority` order (lower number first)
+7. Release extension content from context after stage completion
 
 **This applies to ALL stages**: Requirements Analysis, User Stories, Workflow Planning, Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation, Build and Test.
 

@@ -1,740 +1,331 @@
 # Extension Generator Skill
 
-**Skill**: extension-generator v2.0.0
-**Applies To**: Workflow Planning Stage (one-time generation)
-**IDE-Agnostic**: Works with any AI coding tool (Q Developer, Kiro, Cursor, Cline, Claude Code, Copilot)
-
----
+**Skill**: extension-generator v3.0.0 | **Stage**: Workflow Planning (one-time) | **IDE-Agnostic**
 
 ## Purpose
 
-Generates a complete AI-DLC extension folder for any compliance framework, security standard, or custom ruleset. Uses available tools (web search, fetch, MCP servers) to research the latest requirements before generating.
+Generates AI-DLC extension folders for any ruleset — compliance frameworks, security standards, coding conventions, business rules, team processes, or anything else. For security/compliance/privacy rules, uses CSA CCM v4.1 as the normalization layer. For non-compliance rules, generates directly without CCM overhead.
 
 ---
 
-## MANDATORY: Research Before Generating
+## Rule Type Classification
 
-**Do NOT rely solely on training data for compliance content.** Standards change. Before generating any extension, the AI model MUST attempt to research current requirements using whatever tools are available in the current environment.
+Before doing anything else, classify what the user is asking for:
 
-### Tool Discovery
+| Rule Type | Category | CCM Applies? | Examples |
+|-----------|----------|-------------|----------|
+| Security/Compliance/Privacy | `security`, `compliance` | **Yes** — full CCM resolution | HIPAA, PCI-DSS, GDPR, SOC 2, NIST, ISO 27001, OWASP |
+| Coding Standards | `quality` | **No** | Style guides, linting rules, naming conventions, language idioms |
+| Business Rules | `process` | **No** | Approval workflows, SLA requirements, domain logic constraints |
+| Architecture Standards | `architecture` | **No** (unless security-related) | API design patterns, microservice boundaries, data modeling rules |
+| Team/Org Process | `process` | **No** | PR review rules, branching strategy, documentation requirements |
+| Mixed | Multiple extensions | **Split** — CCM for compliance parts, direct for the rest | "Our HIPAA rules plus our coding standards" |
 
-Check what tools are available. Different IDEs provide different capabilities:
+**Detection heuristic**: If the user's input mentions a known framework from the Source-of-Truth Registry, or contains keywords like encrypt, audit, access control, compliance, regulation, privacy, breach, vulnerability — classify as security/compliance. Otherwise, classify as non-compliance.
 
-| Capability | How to Check |
-|-----------|-------------|
-| Web search | Try using any available web search tool (web_search, remote_web_search, etc.) |
-| URL fetch | Try using any available fetch tool (mcp_fetch_fetch, web_fetch, etc.) |
-| MCP servers | Try using any available MCP tools (Context7, AWS docs, etc.) |
-| File read | Always available — read user-provided docs from local paths |
+For **mixed** inputs: split into separate extensions by type. Don't force coding conventions through CCM.
 
-**The AI model should attempt to use whatever tools exist.** If a tool isn't available, skip it and move on. If NO research tools are available, fall back to training data knowledge and inform the user.
+---
 
-### Research Strategy
+## CCM-Anchored Resolution (security/compliance/privacy only)
 
-For the standard the user names, attempt these in order:
+For rules classified as security/compliance/privacy, follow this deterministic order instead of random web searches:
 
-1. **Search for the official standard documentation** — look for the latest version, recent updates, current control lists
-2. **Search for implementation guides** — practical guidance for applying the standard to software
-3. **Search for recent changes or updates** — any new requirements added in the last 1-2 years
-4. **Fetch specific pages** if search returns relevant URLs — extract control lists, requirement details, implementation guidance
+```
+1. CCM Domain Lookup        → relevant CCM v4.1 domain(s) + control IDs
+2. Official Framework Mapping → CCM ↔ framework crosswalk (ISO, NIST, PCI, etc.)
+3. Official Source of Truth   → issuing body URL for legal/regulatory text
+4. Cloud Provider Artifacts   → provider's own CCM/STAR alignment docs
+5. Gap Fill (last resort)     → web search only for what CCM doesn't cover
+```
 
-**What to research per standard type:**
+**Why**: CCM v4.1 has 207 controls across 17 domains, harmonizes 40+ global standards, and every major cloud provider publishes CCM/STAR alignment. Extensions become cross-framework comparable.
 
-| Standard Type | Research Focus |
-|--------------|---------------|
-| Compliance (HIPAA, PCI-DSS, SOX) | Current control requirements, recent rule changes, enforcement guidance |
-| Privacy (GDPR, CCPA, LGPD) | Data subject rights, processing requirements, recent enforcement trends |
-| Government (FedRAMP, NIST, FISMA) | Current control baselines, impact levels, recent revisions |
-| Security (OWASP, CIS, ISO 27001) | Current top risks/controls, latest version changes, implementation benchmarks |
-| Industry-specific | Current regulatory requirements, recent updates, sector-specific controls |
+For **non-compliance rules**: skip this entire section. Go straight to Step 1 → Step 3 → Step 4.
 
-**Log research results** in the generated extension's `overview.md` so users know what sources informed the content.
+---
+
+## CCM v4.1 Domain Reference
+
+| ID | Domain | Scope | Controls |
+|----|--------|-------|----------|
+| AIS | Application & Interface Security | Secure coding, API security, runtime protections | AIS-01–07 |
+| A&A | Audit & Assurance | Audits, evidence collection, control verification | A&A-01–06 |
+| BCR | Business Continuity & Resilience | Backup, DR, continuity planning | BCR-01–11 |
+| CCC | Change Control & Config Mgmt | Config baselines, change processes, IaC | CCC-01–09 |
+| DSP | Data Security & Privacy Lifecycle | Classification, encryption, retention, destruction | DSP-01–19 |
+| DCS | Datacenter Security | Physical/environmental safeguards | DCS-01–09 |
+| CEK | Cryptography, Encryption & Key Mgmt | Crypto standards, key lifecycle, certs | CEK-01–21 |
+| GRC | Governance, Risk & Compliance | Legal, regulatory, contractual alignment | GRC-01–08 |
+| HRS | Human Resources Security | Screening, acceptable use, awareness | HRS-01–13 |
+| IAM | Identity & Access Management | Least privilege, MFA, lifecycle, service accounts | IAM-01–16 |
+| IVS | Infrastructure & Virtualization | Hypervisor, container, serverless hardening | IVS-01–13 |
+| IPY | Interoperability & Portability | Open standards, data export, lock-in prevention | IPY-01–04 |
+| LOG | Logging & Monitoring | Collection, correlation, retention, alerting | LOG-01–13 |
+| SEF | Security Incident Mgmt & Forensics | Incident response, evidence, legal discovery | SEF-01–08 |
+| STA | Supply Chain & Accountability | Third-party oversight, SBOM, contracts | STA-01–14 |
+| TVM | Threat & Vulnerability Mgmt | Vuln ID, threat intel, pen testing, remediation | TVM-01–12 |
+| UEM | Universal Endpoint Management | Endpoint security, BYOD, device compliance | UEM-01–15 |
+
+
+## Official Source-of-Truth Registry
+
+Always cite the issuing body — never a blog or third-party summary.
+
+| Framework | Issuing Body | URL | CCM Domains |
+|-----------|-------------|-----|-------------|
+| HIPAA | U.S. HHS | https://www.hhs.gov/hipaa/ | DSP, CEK, IAM, LOG, SEF |
+| PCI-DSS | PCI SSC | https://www.pcisecuritystandards.org/ | DSP, CEK, IAM, LOG, AIS |
+| GDPR | EU | https://eur-lex.europa.eu/eli/reg/2016/679/oj | DSP, GRC, IAM, LOG |
+| SOC 2 | AICPA | https://www.aicpa.org/trustservicescriteria | Official CCM mapping |
+| NIST 800-53r5 | NIST | https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final | Official CCM mapping |
+| NIST CSF 2.0 | NIST | https://www.nist.gov/cyberframework | CSA Cloud Community Profile |
+| ISO 27001 | ISO/IEC | https://www.iso.org/standard/27001 | Official CCM mapping |
+| ISO 27017/27018 | ISO/IEC | https://www.iso.org/standard/43757.html | Official CCM mapping |
+| FedRAMP | GSA | https://www.fedramp.gov/ | Via NIST 800-53 → CCM |
+| CIS Controls v8 | CIS | https://www.cisecurity.org/controls | Official CCM mapping |
+| CCPA/CPRA | CA AG | https://oag.ca.gov/privacy/ccpa | DSP, GRC, IAM |
+| LGPD | Brazil | https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm | DSP, GRC, IAM |
+| SOX IT | SEC/PCAOB | https://www.sec.gov/spotlight/sarbanes-oxley.htm | A&A, CCC, GRC, LOG |
+| OWASP Top 10 | OWASP | https://owasp.org/Top10/ | AIS, IAM, LOG, TVM |
+| CSA CCM v4.1 | CSA | https://cloudsecurityalliance.org/artifacts/cloud-controls-matrix-v4 | Native |
+
+**Unlisted frameworks**: Check https://cloudsecurityalliance.org/research/cloud-controls-matrix/ for existing mappings first. If none, manually map to closest CCM domains and document rationale.
+
+## Cloud Provider Artifacts
+
+| Provider | Source | Note |
+|----------|--------|------|
+| AWS | AWS Artifact + https://aws.amazon.com/compliance/ | STAR Level 2 |
+| Azure | Compliance Manager + https://learn.microsoft.com/en-us/azure/compliance/ | STAR Level 2 |
+| GCP | https://cloud.google.com/security/compliance | STAR Level 2 |
 
 ---
 
 ## Process
 
-### Step 1: Ask What Standard the User Needs
-
-Present categories (Healthcare, Financial, Government, Privacy, Security, Industry, Internal/Custom) and ask the user to name their standard. Accept any standard. Multiple standards = generate separate extensions for each.
-
-Also offer the option to provide existing documentation:
+### Step 1: Ask Input Mode
 
 ```markdown
 **How would you like to create your extension?**
-
-- A) Name a standard (HIPAA, PCI-DSS, GDPR, SOC 2, etc.) — I'll research it and generate rules
-- B) Point me to folder(s) with your existing rule docs — I'll read them and generate a structured extension
-- C) Describe your custom rules — I'll generate an extension from your description
-
-[Answer]:
-```
-
-**If user chooses B (existing docs):**
-
-#### Where to put the files
-
-Users place their rule documents in a folder anywhere in their workspace. There is no required location, but we recommend:
-
-```
-<my-project>/
-├── .aidlc-rule-details/         # AI-DLC rules (already exists)
-├── aidlc-docs/                  # AI-DLC outputs (already exists)
-├── custom-rules/                # RECOMMENDED: put your rule docs here
-│   ├── hipaa/
-│   │   ├── data-protection.md
-│   │   └── access-control.md
-│   └── internal-standards/
-│       └── coding-guidelines.md
-└── [project code]
-```
-
-Any folder path works. The user provides the path(s) and the AI reads from there.
-
-#### What the AI reads
-
-Supported file types:
-- `.md` (Markdown) — preferred, best for structured rules
-- `.txt` (Plain text) — simple rule lists, policies
-- `.yaml` / `.yml` (YAML) — structured control definitions
-- `.json` (JSON) — structured rule data
-
-Skipped automatically:
-- Binary files (images, PDFs, compiled files)
-- Files larger than 100KB (flag to user, ask if they want to include)
-- Hidden files/folders (`.git`, `.DS_Store`, etc.)
-
-**Note on PDFs**: The AI cannot read PDF files directly. If the user's rules are in PDF format, ask them to convert to markdown first or paste the key content into `.md` files.
-
-#### Process for option B
-
-1. Ask for folder path(s):
-```markdown
-Where are your rule documents located? Provide one or more folder paths relative to your project root.
-
-Example: `custom-rules/hipaa/`, `custom-rules/internal-standards/`
+- A) Name a standard (HIPAA, PCI-DSS, GDPR, etc.) — I'll resolve via CCM and generate
+- B) Point me to folder(s) with existing rule docs — I'll read and structure them
+- C) Describe your rules — coding standards, business rules, team processes, or anything else
 
 [Answer]:
 ```
 
-2. Scan the folder(s) and list what was found:
-```markdown
-I found the following files:
+**Option B details**: User provides folder path(s). AI reads `.md`, `.txt`, `.yaml`, `.json` files (skips binaries, >100KB, hidden files). Cannot read PDFs — ask user to convert. Scan → list files → read → classify rule type → ask clarifying questions for ambiguities → if compliance: map to CCM → proceed to Step 3.
 
-| # | File | Size | Type |
-|---|------|------|------|
-| 1 | custom-rules/hipaa/data-protection.md | 4KB | Markdown |
-| 2 | custom-rules/hipaa/access-control.md | 2KB | Markdown |
-| 3 | custom-rules/internal-standards/coding-guidelines.md | 6KB | Markdown |
+**Option C**: User describes rules → classify rule type → if compliance: map to CCM; if not: proceed directly → Step 3.
 
-I'll now read these and analyze the content.
-```
+**Option A**: Classify as compliance → proceed to Step 2.
 
-3. Read each file and build an understanding of: what standard/framework it covers, key control areas, scope, and which AI-DLC phases each rule maps to.
+### Step 2: CCM-Anchored Resolution (compliance/security rules only — skip for other types)
 
-4. **Ask clarifying questions** for anything ambiguous. Common situations that require clarification:
+1. **CCM Domain Lookup** — identify relevant domains from the table above (e.g., HIPAA → primary: DSP, CEK, IAM, LOG, SEF; secondary: AIS, BCR, HRS)
+2. **Official Mapping** — use CSA's published CCM ↔ framework mapping if available; otherwise manually map and document rationale
+3. **Official Source** — link issuing body URL from the registry into `overview.md`
+4. **Provider Artifacts** — if cloud platform known, reference provider's compliance docs
+5. **Gap Fill** — only if steps 1-4 leave gaps, search web. Note gap-fill sources separately in `overview.md`
 
-```markdown
-I have a few questions about your rule documents:
+If no tools available: use CCM mappings + training data, cite official URLs, tell user to verify.
 
-**Question DOC-1**: In `data-protection.md`, you mention "sensitive data must be encrypted." Which encryption standard should be used?
-- A) AES-256
-- B) AES-128
-- C) Whatever the cloud provider default is
-- D) It's specified elsewhere (please point me to it)
+### Step 3: Scoping Questions
 
-[Answer]:
-
-**Question DOC-2**: Your `access-control.md` references "role-based access" but doesn't list the roles. Should I:
-- A) Define standard roles based on the framework (e.g., Admin, Clinician, Patient for HIPAA)
-- B) Leave role definitions for you to fill in later
-- C) The roles are defined in another document (please provide path)
-
-[Answer]:
-
-**Question DOC-3**: I found rules about testing in `coding-guidelines.md` and also in `access-control.md`. Should I:
-- A) Combine them into one testing section
-- B) Keep them separate (testing from each source applied independently)
-
-[Answer]:
-```
-
-Ask clarifying questions when:
-- A rule is vague or could be interpreted multiple ways
-- A rule references something not defined in the provided docs
-- Rules from different files appear to conflict
-- A rule's scope is unclear (does it apply to all code or just specific areas?)
-- Technical specifics are missing (which encryption algorithm, which auth protocol, etc.)
-
-5. Skip Step 2 (research) — the user's docs ARE the source
-6. Proceed to Step 3 (scoping questions) with the doc content as context, then Step 4 (generate)
-7. The generated extension cites the user's files as sources in `overview.md`
-
-**If user chooses C (describe rules):**
-1. Ask the user to describe their rules, standards, or guidelines
-2. Skip Step 2 (research)
-3. Proceed to Step 3 (scoping questions) with the description as context, then Step 4 (generate)
-
-**If user chooses A (name a standard):**
-Proceed to Step 2 (research) as normal.
-
-### Step 2: Research the Standard
-
-Before asking scoping questions, research the standard using available tools:
-
-1. **Search** for "[standard name] latest requirements [current year]"
-2. **Search** for "[standard name] software development compliance checklist"
-3. **Fetch** any official documentation URLs found
-4. **Note** the current version, last update date, and key control areas found
-
-If research tools are unavailable, state: "I don't have web access in this environment, so I'll use my built-in knowledge of [standard]. Please verify the generated content against the latest official documentation."
-
-### Step 3: Ask Scoping Questions
-
-Universal questions for ALL standards:
-
-1. **Application type**: Web, API, mobile, data pipeline, infrastructure, full-stack, other
-2. **Programming language(s)**: TypeScript, Python, Java, Go, C#, Rust, multiple, undecided
+Universal (all standards):
+1. **App type**: Web, API, mobile, data pipeline, infrastructure, full-stack, other
+2. **Language(s)**: TypeScript, Python, Java, Go, C#, Rust, multiple, undecided
 3. **Cloud platform**: AWS, Azure, GCP, multi-cloud, on-premises, N/A
-4. **Strictness level**: Maximum (all MUST), Balanced (critical=MUST, others=SHOULD), Advisory (all SHOULD/MAY), User reviews after
-5. **Phases to cover**: All phases (recommended), design+code only, requirements+design only, code+testing only, user picks specific phases
+4. **Strictness**: Maximum (all MUST), Balanced (critical=MUST, others=SHOULD), Advisory (all SHOULD/MAY)
+5. **Phases**: All (recommended), or user picks specific phases
 
-Then ask standard-specific questions informed by the research results. Focus on:
-- What specific data/assets are in scope
-- Which areas/controls of the standard are most relevant (list actual control areas found in research)
-- The user's role or context within the standard
-- Compliance level or tier if applicable
+Then standard-specific questions informed by CCM domain mapping: data/assets in scope, relevant CCM domains, user's role, compliance tier. Use `[Answer]:` format.
 
-For custom/internal standards: ask the user to describe their rules or provide file paths.
+### Step 4: Generate Extension
 
-Use the standard `[Answer]:` tag format for all questions.
+Output at `.aidlc-rule-details/extensions/[category]-[standard-name]/` (lowercase, hyphens).
 
-### Step 4: Generate the Extension Folder
+**If compliance/security**: Every control in every file MUST include dual references: `[Framework Ref] → CCM [Domain]-[ID]`.
 
-Generate at `.aidlc-rule-details/extensions/[category]-[standard-name]/`.
+**If non-compliance**: No CCM references needed. Use the rule's own categorization (e.g., "STYLE-01: Use 2-space indentation" or "BIZ-RULE-03: Loan amounts require manager approval above $50K").
 
-**Naming**: lowercase with hyphens. Examples: `compliance-hipaa`, `security-fedramp`, `compliance-pci-dss`
+### Step 5: Review
 
-**The generated extension MUST follow the exact structure defined in the Reference Extension Structure section below.**
-
-### Step 5: Present for Review
-
-Show the user: file list, phases covered, strictness level, sources used. Offer: approve, request changes, or discard.
+Show: file list, phases, strictness, CCM domains covered, sources. Offer: approve / change / discard.
 
 ### Step 6: Enable
 
-On approval: add to `aidlc-docs/enabled-extensions.md`, log in `audit.md`. The extension is immediately active for remaining phases.
+On approval: add to `aidlc-docs/enabled-extensions.md`, log in `audit.md`.
+
 
 ---
 
-## Reference Extension Structure
+## Extension Structure
 
-**Every generated extension MUST conform to this structure.** This is the canonical reference for what a well-formed AI-DLC extension looks like.
-
-### Required Folder Layout
+### Folder Layout
 
 ```
 .aidlc-rule-details/extensions/[category]-[standard-name]/
-├── rule-manifest.yaml          # REQUIRED: metadata, triggers, stage-to-file mapping
-├── overview.md                 # REQUIRED: description, scope, sources
-├── requirements.md             # IF requirements-analysis phase selected
-├── stories.md                  # IF user-stories phase selected
-├── design.md                   # IF application-design OR functional-design phase selected
-├── nfr-additions.md            # IF nfr-requirements OR nfr-design phase selected
-├── infrastructure.md           # IF infrastructure-design phase selected
-├── code-guidelines.md          # IF code-generation phase selected
-└── testing.md                  # IF build-and-test phase selected
+├── rule-manifest.yaml    # REQUIRED: metadata, triggers, stage-to-file mapping
+├── overview.md           # REQUIRED: scope, sources, rule type
+├── ccm-mapping.md        # IF compliance/security — full framework ↔ CCM crosswalk
+├── requirements.md       # IF requirements-analysis selected
+├── stories.md            # IF user-stories selected
+├── design.md             # IF application-design OR functional-design selected
+├── nfr-additions.md      # IF nfr-requirements OR nfr-design selected
+├── infrastructure.md     # IF infrastructure-design selected
+├── code-guidelines.md    # IF code-generation selected
+└── testing.md            # IF build-and-test selected
 ```
 
-Only generate files for phases the user selected in scoping question 5. The `rule-manifest.yaml` MUST only reference files that actually exist.
+Only generate files for selected phases. Manifest MUST only reference files that exist. `ccm-mapping.md` is only generated for compliance/security/privacy extensions.
 
----
-
-### Complete `rule-manifest.yaml` Reference
-
-This is the full manifest with ALL possible stages. Remove stages/files the user didn't select.
+### `rule-manifest.yaml`
 
 ```yaml
-name: "[category]-[standard-name]"       # lowercase, hyphens, no spaces
+name: "[category]-[standard-name]"
 version: "1.0.0"
-displayName: "[Standard Full Name] Guidelines"
-description: "[One sentence describing what this extension adds]"
+displayName: "[Standard/Ruleset] Guidelines"
+description: "[One sentence]"
 author: "Generated by extension-generator"
 category: "[security|compliance|process|quality|architecture]"
+rule_type: "[compliance|coding|business|architecture|process]"
+ccm_version: "4.1"                         # ONLY for compliance/security types
+ccm_domains: ["DSP", "CEK", "IAM"]         # ONLY for compliance/security types
 
 triggers:
   suggest_when:
-    # Match project types relevant to this standard
-    - project_type: ["web", "api", "microservice", "library", "cli", "backend"]
-    # Match keywords that indicate this standard is relevant
-    - has_requirements_keyword: ["keyword1", "keyword2", "keyword3"]
-    # Match languages if standard is language-specific
-    - programming_language: ["python", "typescript", "java"]
+    - project_type: ["web", "api", "microservice"]
+    - has_requirements_keyword: ["keyword1", "keyword2"]
   always_available: true
   auto_enable: false
 
-# CRITICAL: This maps stages to files. Every file listed here MUST exist.
-# Every stage listed here will have the file's content appended/prepended at that stage.
 applies_to:
   inception:
-    - stage: "requirements-analysis"      # Adds compliance requirements
+    - stage: "requirements-analysis"
       file: "requirements.md"
       action: "append"
-    - stage: "user-stories"               # Adds compliance acceptance criteria
+    - stage: "user-stories"
       file: "stories.md"
       action: "append"
-    - stage: "application-design"         # Adds architectural constraints
+    - stage: "application-design"
       file: "design.md"
       action: "append"
   construction:
-    - stage: "functional-design"          # Adds design patterns/constraints
+    - stage: "functional-design"
       file: "design.md"
       action: "append"
-    - stage: "nfr-requirements"           # Adds NFR standards
+    - stage: "nfr-requirements"
       file: "nfr-additions.md"
       action: "append"
-    - stage: "nfr-design"                 # Adds NFR design patterns
+    - stage: "nfr-design"
       file: "nfr-additions.md"
       action: "append"
-    - stage: "infrastructure-design"      # Adds infrastructure constraints
+    - stage: "infrastructure-design"
       file: "infrastructure.md"
       action: "append"
-    - stage: "code-generation"            # Adds coding rules
+    - stage: "code-generation"
       file: "code-guidelines.md"
       action: "append"
-    - stage: "build-and-test"             # Adds testing/audit requirements
+    - stage: "build-and-test"
       file: "testing.md"
       action: "append"
 
-priority: 30          # 1-100. Lower = applied earlier. Compliance: 10-30, Security: 30-50, Quality: 50-100
-conflicts_with: []    # Names of extensions that can't coexist
-depends_on: []        # Names of extensions that must be enabled first
-tags: ["tag1", "tag2"]
+priority: 30
+conflicts_with: []
+depends_on: []
+tags: ["ccm-mapped"]
 ```
 
-**How `applies_to` works at runtime:**
-- When the AI-DLC workflow reaches a stage (e.g., `code-generation`), it checks all enabled extensions
-- If an extension has an `applies_to` entry for that stage, the AI reads the referenced file
-- The file content is applied using the `action` (append = add after core content, prepend = add before)
-- Multiple extensions can apply to the same stage — they're applied in `priority` order
+Remove stages/files the user didn't select.
 
-**Note:** A single file (like `design.md`) CAN be referenced by multiple stages (like `application-design` AND `functional-design`). The same content is injected at both stages.
 
----
+### `overview.md`
 
-### Complete `overview.md` Reference
+Must include: Purpose (2-3 sentences), Rule Type (compliance/coding/business/architecture/process), Scope (standard or ruleset name, app type, languages, cloud, strictness, phases), Phase summary table. **If compliance**: add official source URL, CCM version, CCM Domain Coverage table, Authoritative Sources table, verification warning. **If non-compliance**: add rule source (team wiki, style guide, business requirements doc, etc.) and rule categorization scheme.
 
-```markdown
-# [Standard Full Name] Extension
+### `ccm-mapping.md` (compliance/security only)
 
-## Purpose
+Must include: Mapping methodology (source, CCM version, framework version, date), Control Crosswalk table (framework ID → name → CCM domain → CCM IDs → confidence: Official/High/Medium/Low), Unmapped Controls table (framework controls with no CCM equivalent), CCM Controls Without Framework Equivalent table. **Not generated for non-compliance extensions.**
 
-[2-3 sentences: what this extension adds and why, based on scoping answers]
+### Stage Content Files — Universal Template
 
-## Scope
-
-- **Standard**: [name and version]
-- **Application Type**: [from scoping question 1]
-- **Languages**: [from scoping question 2]
-- **Cloud Platform**: [from scoping question 3]
-- **Strictness**: [from scoping question 4]
-- **Phases Covered**: [from scoping question 5]
-
-## What This Extension Covers
-
-| Phase | What's Added |
-|-------|-------------|
-| Requirements Analysis | [1-line summary of what requirements.md adds] |
-| User Stories | [1-line summary of what stories.md adds] |
-| Design | [1-line summary of what design.md adds] |
-| NFR | [1-line summary of what nfr-additions.md adds] |
-| Infrastructure | [1-line summary of what infrastructure.md adds] |
-| Code Generation | [1-line summary of what code-guidelines.md adds] |
-| Build and Test | [1-line summary of what testing.md adds] |
-
-(Only include rows for phases that were selected)
-
-## Key [Standard] Areas Covered
-
-- [Area/Control Family 1]: [brief description]
-- [Area/Control Family 2]: [brief description]
-- [Area/Control Family 3]: [brief description]
-
-## Sources
-
-This extension was generated using:
-- [Source 1: URL or "AI model training data"]
-- [Source 2: URL or description]
-- **Research date**: [date]
-- **Standard version**: [version found, or "latest available as of [date]"]
-
-⚠️ Compliance standards change. Verify this content against official documentation periodically.
-
----
-
-*Extension: [name] v1.0.0 — Generated by extension-generator*
-```
-
----
-
-### Stage Content File Templates
-
-Each stage file follows the same structure but with content appropriate to what that stage does in the AI-DLC workflow.
-
-#### `requirements.md` — Requirements Analysis Stage
-
-**Purpose at this stage**: Add compliance-driven requirements that must be captured before design begins.
+All stage files (`requirements.md`, `stories.md`, `design.md`, `nfr-additions.md`, `infrastructure.md`, `code-guidelines.md`, `testing.md`) follow this single pattern. Substitute `{STAGE}` and `{CONTENT_TYPE}` per the table below.
 
 ```markdown
-## [Standard] - Requirements Analysis Guidelines
+## [Standard/Ruleset] - {STAGE} Guidelines
 
-**Extension**: [name] v1.0.0
-**Applies To**: Requirements Analysis
-
----
-
-### Compliance Requirements
-
-#### [Control Area 1]: [Name] (e.g., "Data Protection", "Access Control")
-
-**Objective**: [What this control area requires]
-**Reference**: [Control ID, e.g., HIPAA §164.312(a)(1), PCI-DSS Req 3.4]
-
-- [MUST/SHOULD/MAY] [Specific requirement to capture]
-- [MUST/SHOULD/MAY] [Specific requirement to capture]
-
-#### [Control Area 2]: [Name]
-
-**Objective**: [What this control area requires]
-**Reference**: [Control ID]
-
-- [MUST/SHOULD/MAY] [Specific requirement to capture]
-- [MUST/SHOULD/MAY] [Specific requirement to capture]
-
-### Requirements Checklist
-
-- [ ] [Requirement captured: e.g., "Data classification defined for all data types"]
-- [ ] [Requirement captured: e.g., "Access control model specified"]
-- [ ] [Requirement captured: e.g., "Audit logging requirements documented"]
-- [ ] [Requirement captured: e.g., "Encryption requirements specified"]
-
-### Additional Questions
-
-**Question [PREFIX]-R1**: [Compliance-relevant question for requirements phase]
-- A) [Option]
-- B) [Option]
-- C) [Option]
-- D) Other (please describe)
-
-[Answer]:
+**Extension**: [name] v1.0.0 | **Applies To**: {STAGE} | **Type**: [compliance|coding|business|architecture|process]
 
 ---
 
-*This content is provided by the [name] extension.*
-```
+### {CONTENT_TYPE}
 
-#### `stories.md` — User Stories Stage
+#### [Control/Rule Area]: [Name]
 
-**Purpose at this stage**: Add compliance-related acceptance criteria to user stories.
+**Reference**: [Framework Control ID or internal Rule ID, e.g., "HIPAA §164.312(a)(1)" or "STYLE-03"]
+**CCM Mapping**: [CCM Domain-ID] ← ONLY for compliance/security types; omit for others
 
-```markdown
-## [Standard] - User Stories Guidelines
+- [MUST/SHOULD/MAY] [Specific actionable item]
+- [MUST/SHOULD/MAY] [Specific actionable item]
 
-**Extension**: [name] v1.0.0
-**Applies To**: User Stories
+(Repeat per control area)
 
----
+### {STAGE}-Specific Additions
 
-### Compliance Acceptance Criteria
-
-When creating user stories, add these acceptance criteria where applicable:
-
-#### [Control Area]: [Name]
-
-- **AC**: [Specific acceptance criterion, e.g., "Given a user accesses PHI, when the access is logged, then the audit trail includes user ID, timestamp, and data accessed"]
-- **AC**: [Specific acceptance criterion]
-
-#### [Control Area]: [Name]
-
-- **AC**: [Specific acceptance criterion]
-- **AC**: [Specific acceptance criterion]
-
-### Compliance-Specific User Stories
-
-Consider adding these stories if not already covered:
-
-- As a [role], I need [compliance capability] so that [compliance outcome]
-- As a [role], I need [compliance capability] so that [compliance outcome]
+(Stage-specific tables/patterns/scenarios — see substitution table below)
 
 ### Checklist
 
-- [ ] All stories handling [regulated data type] include compliance acceptance criteria
-- [ ] Audit/logging stories exist for [regulated activities]
-- [ ] Access control stories cover [required access patterns]
+- [ ] [Verifiable item (CCM Domain-ID)]
+- [ ] [Verifiable item (CCM Domain-ID)]
 
 ---
 
-*This content is provided by the [name] extension.*
+*[name] extension (CCM-anchored)*
 ```
 
-#### `design.md` — Application Design + Functional Design Stages
-
-**Purpose at this stage**: Add compliance-driven architectural constraints and design patterns.
-
-```markdown
-## [Standard] - Design Guidelines
-
-**Extension**: [name] v1.0.0
-**Applies To**: Application Design, Functional Design
-
----
-
-### Architectural Constraints
-
-#### [Control Area]: [Name]
-
-**Constraint**: [What the architecture must enforce]
-**Reference**: [Control ID]
-
-- [MUST/SHOULD/MAY] [Specific design constraint]
-- [MUST/SHOULD/MAY] [Specific design constraint]
-
-### Design Patterns to Follow
-
-| Pattern | Purpose | When to Apply |
-|---------|---------|--------------|
-| [Pattern name] | [What it achieves for compliance] | [Trigger condition] |
-| [Pattern name] | [What it achieves for compliance] | [Trigger condition] |
-
-### Anti-Patterns to Avoid
-
-| Anti-Pattern | Risk | Alternative |
-|-------------|------|------------|
-| [Anti-pattern] | [Compliance risk] | [What to do instead] |
-| [Anti-pattern] | [Compliance risk] | [What to do instead] |
-
-### Design Checklist
-
-- [ ] [Design constraint verified: e.g., "Data encryption at rest designed into storage layer"]
-- [ ] [Design constraint verified: e.g., "Role-based access control modeled"]
-- [ ] [Design constraint verified: e.g., "Audit logging architecture defined"]
-
----
-
-*This content is provided by the [name] extension.*
-```
-
-#### `nfr-additions.md` — NFR Requirements + NFR Design Stages
-
-**Purpose at this stage**: Add compliance-driven non-functional requirements and their design patterns.
-
-```markdown
-## [Standard] - NFR Guidelines
-
-**Extension**: [name] v1.0.0
-**Applies To**: NFR Requirements, NFR Design
-
----
-
-### Compliance NFRs
-
-#### [NFR Category]: [Name] (e.g., "Security", "Auditability", "Data Retention")
-
-**Requirement**: [Specific NFR statement]
-**Reference**: [Control ID]
-**Metric**: [How to measure compliance]
-
-- [MUST/SHOULD/MAY] [Specific NFR item]
-- [MUST/SHOULD/MAY] [Specific NFR item]
-
-#### [NFR Category]: [Name]
-
-**Requirement**: [Specific NFR statement]
-**Reference**: [Control ID]
-**Metric**: [How to measure compliance]
-
-- [MUST/SHOULD/MAY] [Specific NFR item]
-
-### Tool/Technology Requirements
-
-| Requirement | Recommended Tools | Purpose |
-|------------|-------------------|---------|
-| [Requirement] | [Tool options] | [What it achieves for compliance] |
-| [Requirement] | [Tool options] | [What it achieves for compliance] |
-
-### NFR Checklist
-
-- [ ] [NFR defined: e.g., "Encryption standard specified (AES-256)"]
-- [ ] [NFR defined: e.g., "Audit log retention period set (minimum X years)"]
-- [ ] [NFR defined: e.g., "Access review frequency defined"]
-
----
-
-*This content is provided by the [name] extension.*
-```
-
-#### `infrastructure.md` — Infrastructure Design Stage
-
-**Purpose at this stage**: Add compliance-driven infrastructure constraints and service requirements.
-
-```markdown
-## [Standard] - Infrastructure Guidelines
-
-**Extension**: [name] v1.0.0
-**Applies To**: Infrastructure Design
-
----
-
-### Infrastructure Requirements
-
-#### [Control Area]: [Name]
-
-**Reference**: [Control ID]
-
-- [MUST/SHOULD/MAY] [Specific infrastructure requirement]
-- [MUST/SHOULD/MAY] [Specific infrastructure requirement]
-
-### Cloud Service Requirements (if applicable)
-
-| Service Category | Compliance Requirement | [Cloud] Service Options |
-|-----------------|----------------------|------------------------|
-| [Category, e.g., "Encryption"] | [What's required] | [Specific services] |
-| [Category, e.g., "Logging"] | [What's required] | [Specific services] |
-| [Category, e.g., "Network"] | [What's required] | [Specific services] |
-
-### Infrastructure Checklist
-
-- [ ] [Infra requirement: e.g., "Encryption at rest enabled on all data stores"]
-- [ ] [Infra requirement: e.g., "Network segmentation for regulated data"]
-- [ ] [Infra requirement: e.g., "Centralized audit logging configured"]
-- [ ] [Infra requirement: e.g., "Backup and disaster recovery plan defined"]
-
----
-
-*This content is provided by the [name] extension.*
-```
-
-#### `code-guidelines.md` — Code Generation Stage
-
-**Purpose at this stage**: Add compliance-driven coding standards, patterns, and anti-patterns.
-
-```markdown
-## [Standard] - Code Generation Guidelines
-
-**Extension**: [name] v1.0.0
-**Applies To**: Code Generation
-
----
-
-### Mandatory Coding Requirements
-
-#### [Control Area]: [Name]
-
-**Reference**: [Control ID]
-
-- [MUST/SHOULD/MAY] [Specific coding requirement]
-- [MUST/SHOULD/MAY] [Specific coding requirement]
-
-### Secure Coding Patterns
-
-```[language]
-# ✅ CORRECT: [Description of compliant pattern]
-[short code example — 3-8 lines max]
-
-# ❌ WRONG: [Description of non-compliant pattern]
-[short code example — 3-8 lines max]
-```
-
-(Include 2-4 pattern examples tailored to the user's language from scoping question 2)
-
-### Code Generation Checklist
-
-- [ ] [Code requirement: e.g., "All [regulated data] inputs validated with schema"]
-- [ ] [Code requirement: e.g., "Parameterized queries for all database operations"]
-- [ ] [Code requirement: e.g., "No [regulated data] in log output"]
-- [ ] [Code requirement: e.g., "Error messages do not expose [regulated data]"]
-- [ ] [Code requirement: e.g., "[Regulated data] encrypted before storage"]
-
----
-
-*This content is provided by the [name] extension.*
-```
-
-#### `testing.md` — Build and Test Stage
-
-**Purpose at this stage**: Add compliance-driven testing, scanning, and audit requirements.
-
-```markdown
-## [Standard] - Testing Guidelines
-
-**Extension**: [name] v1.0.0
-**Applies To**: Build and Test
-
----
-
-### Compliance Testing Requirements
-
-#### [Test Category]: [Name] (e.g., "Security Scanning", "Audit Verification")
-
-**Reference**: [Control ID]
-
-- [MUST/SHOULD/MAY] [Specific test requirement]
-- [MUST/SHOULD/MAY] [Specific test requirement]
-
-### Required Scans and Tools
-
-| Scan Type | Tool Options | Frequency | Failure Threshold |
-|-----------|-------------|-----------|-------------------|
-| [Scan type] | [Tools] | [When to run] | [What blocks deployment] |
-| [Scan type] | [Tools] | [When to run] | [What blocks deployment] |
-
-### Compliance Test Scenarios
-
-- [ ] Test: [Specific test scenario, e.g., "Verify audit log captures all PHI access events"]
-- [ ] Test: [Specific test scenario, e.g., "Verify encryption at rest for all data stores"]
-- [ ] Test: [Specific test scenario, e.g., "Verify access denied for unauthorized roles"]
-- [ ] Test: [Specific test scenario, e.g., "Verify [regulated data] not present in error responses"]
-
-### CI/CD Compliance Gates
-
-- [ ] [Gate: e.g., "SAST scan passes with zero critical findings"]
-- [ ] [Gate: e.g., "Dependency scan passes with zero critical vulnerabilities"]
-- [ ] [Gate: e.g., "Compliance-specific test suite passes"]
-- [ ] [Gate: e.g., "Audit log integrity verified"]
-
----
-
-*This content is provided by the [name] extension.*
-```
+**Substitution table** — what varies per stage:
+
+| File | {STAGE} | {CONTENT_TYPE} | Stage-Specific Additions |
+|------|---------|---------------|--------------------------|
+| requirements.md | Requirements Analysis | Compliance Requirements | Additional Questions (`[Answer]:` format) |
+| stories.md | User Stories | Compliance Acceptance Criteria | Compliance-specific user stories (`As a [role]...`) |
+| design.md | Design | Architectural Constraints | Patterns table (pattern/purpose/CCM/trigger), Anti-patterns table (anti-pattern/risk/CCM violated/alternative) |
+| nfr-additions.md | NFR | Compliance NFRs | Add Metric per NFR, Tool/Technology Requirements table |
+| infrastructure.md | Infrastructure | Infrastructure Requirements | Cloud Service Requirements table (category/requirement/CCM/services) |
+| code-guidelines.md | Code Generation | Mandatory Coding Requirements | Secure Coding Patterns (✅/❌ code examples in user's language, 3-8 lines each) |
+| testing.md | Build and Test | Compliance Testing | Scans/Tools table, Test Scenarios, CI/CD Compliance Gates |
 
 ---
 
 ## Content Quality Rules
 
-When populating the templates above with actual standard content:
-
-1. **Specific, not vague**: Every item must be actionable. "Ensure security" is useless. "Encrypt all PII at rest using AES-256 (HIPAA §164.312(a)(2)(iv))" is actionable.
-2. **Real control references**: Include actual section/control IDs from the standard where they exist.
-3. **Tailored to scoping answers**: If user said Python on AWS, code examples should be Python, infrastructure should reference AWS services.
-4. **Respect strictness level**: Use MUST/SHOULD/MAY per the user's scoping question 4 answer.
-5. **Verifiable checklists**: Every `- [ ]` item must be something you can check as done or not done.
-6. **Research-informed**: Prefer content from research results over training data when available.
-7. **Code examples in code-guidelines.md only**: Other files provide guidance, not code. Exception: short inline examples in design.md anti-patterns table.
-
----
+1. **Traceable**: Compliance items carry framework ref AND CCM control ID. Non-compliance items carry their own rule ID scheme (e.g., STYLE-01, BIZ-03, ARCH-02)
+2. **Specific**: Actionable items only. "Encrypt PII at rest AES-256 (HIPAA §164.312(a)(2)(iv) → CEK-03)" or "STYLE-01: Use 2-space indentation for all TypeScript files" — not "ensure quality"
+3. **Real references**: Actual control/rule IDs — no vague pointers
+4. **Tailored**: Code examples match user's language, infra matches user's cloud platform
+5. **Strictness-aware**: MUST/SHOULD/MAY per scoping answer
+6. **Verifiable checklists**: Every `- [ ]` is pass/fail checkable
+7. **Official sources only** (compliance): CCM mappings + issuing body text over blogs
+8. **Code in code-guidelines.md only**: Other files = guidance, not code
+9. **Gaps documented** (compliance): Unmapped controls go in `ccm-mapping.md`, never silently dropped
+10. **Baseline dedup**: If overlap with security-baseline (SECURITY-01–15), reference the baseline rule ID instead of duplicating
 
 ## Edge Cases
 
-- **No research tools available**: Fall back to training data, inform user to verify against official docs.
-- **Unknown standard**: Ask user to provide documentation or describe rules. Research what's available.
-- **Existing extension with same name**: Offer to overwrite, rename, or cancel.
-- **Very broad standard** (e.g., NIST 800-53): Ask which control families are most relevant.
-- **Multiple standards**: Generate separate extensions for each, check for conflicts.
-- **Outdated research results**: Always include the research date and recommend periodic review.
-- **User docs are incomplete**: Ask clarifying questions for gaps. If critical information is missing, generate what's possible and note gaps in `overview.md` for the user to fill in.
-- **User docs contain contradictions**: Flag the contradiction, ask the user which rule takes precedence, document the resolution.
-- **User docs are in a language the AI can read but not a supported file type**: Ask the user to convert to a supported format or paste the content into a `.md` file.
+- **No tools**: CCM mappings + training data + official URLs. Tell user to verify.
+- **Unknown standard**: Ask for docs or description. Map to CCM where possible.
+- **Same-name extension exists**: Offer overwrite, rename, or cancel.
+- **Broad standard** (NIST 800-53): Ask which control families matter. Use CCM to suggest focused subset.
+- **Multiple standards**: Separate extensions, note shared CCM domains to flag overlap.
+- **No CCM mapping exists**: Manual map to closest domains, confidence = Medium/Low, document rationale.
+- **Incomplete user docs**: Clarifying questions → map what exists → note gaps.
+- **Contradictory user docs**: Flag, ask precedence, document resolution.
+- **Non-compliance rules**: No CCM mapping, no official source registry lookup. Generate directly using the user's own rule IDs and categories. Still follow the universal template structure.
+- **Mixed input** (compliance + non-compliance): Split into separate extensions by type. Example: user provides HIPAA rules + coding style guide → generate `compliance-hipaa/` (with CCM) + `quality-coding-standards/` (without CCM).
 
 ---
 
-*This skill is part of the AI-DLC extension system and works across all supported platforms.*
+*v3.0.0 — CCM-anchored for compliance; direct generation for coding, business, architecture, and process rules.*
