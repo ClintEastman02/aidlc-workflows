@@ -9,6 +9,7 @@ AI-DLC is an intelligent software development workflow that adapts to your needs
 - [Usage](#usage)
 - [Three-Phase Adaptive Workflow](#three-phase-adaptive-workflow)
 - [Key Features](#key-features)
+- [Extensions](#extensions)
 - [Tenets](#tenets)
 - [Prerequisites](#prerequisites)
 - [Troubleshooting](#troubleshooting)
@@ -497,6 +498,71 @@ Deployment and monitoring (future)
 | **Risk-Based** | Complex changes get comprehensive treatment, simple changes stay efficient |
 | **Question-Driven** | Structured multiple-choice questions in files, not chat |
 | **Always in Control** | Review execution plans and approve each phase |
+| **Extensible** | Layer custom rules e.g. security, compliance, and organization-specific rules on top of the core workflow |
+
+---
+
+## Extensions
+
+AI-DLC supports an extension system that lets you layer additional rules on top of the core workflow. Extensions are markdown files organized under `aws-aidlc-rule-details/extensions/` and are automatically loaded and enforced when enabled during the Requirements Analysis phase.
+
+### How Extensions Work
+
+Extensions are grouped by category (e.g., `security/`, `scalability/`, `accessibility/`). Each category can contain its own rules and any number of subcategories you define.
+
+Each extension should include an **Applicability Question** — a structured multiple-choice question that AI-DLC automatically presents during the Requirements Analysis phase. This lets the user decide whether to enable or skip that extension for the current project. For example, the built-in security extension includes:
+
+```markdown
+## Question: Security Extensions
+Should security extension rules be enforced for this project?
+
+A) Yes — enforce all SECURITY rules as blocking constraints
+B) No — skip all SECURITY rules
+X) Other (please describe)
+
+[Answer]:
+```
+
+When you create your own extensions, include a similar applicability question so users can opt in or out per project.
+
+Here's the general flow once an extension is enabled:
+
+1. During the Inception phase, AI-DLC presents the extension's applicability question.
+2. If enabled, the extension's rules are loaded as mandatory, blocking constraints that apply across all AI-DLC phases.
+3. At each stage, the model verifies compliance with all loaded extension rules before allowing the stage to proceed.
+
+### Extension Directory Structure
+
+The workflow currently ships with a baseline security extension. 
+
+```
+aws-aidlc-rule-details/
+└── extensions/
+    └── security/                      # Extension category
+        └── baseline/
+        │   └── security-baseline.md   # Baseline security rules
+        ├── compliance/                # Proposed folder hierarchy
+        │   ├── hipaa/                 # HIPAA compliance rules
+        │   ├── pci-dss/               # PCI-DSS compliance rules
+        │   └── soc2/                  # SOC 2 compliance rules
+        └── internal-policies/         # Your organization's custom rules
+```
+
+### Adding Your Own Extensions
+
+You can extend an existing category or create an entirely new one.
+
+To add rules to an existing category (e.g., security):
+
+1. Create a new directory under `extensions/security/` (e.g., `compliance/hipaa/`).
+2. Add one or more markdown files with your rules. Follow the same structure as `security-baseline.md`:
+   - Give each rule a unique ID.
+   - Include an **Applicabality Question** described above
+   - Include a **Rule** section describing the requirement.
+   - Include a **Verification** section with concrete checks the model should evaluate.
+3. Rules are blocking by default — if verification criteria are not met, the stage cannot proceed until the finding is resolved.
+
+To create a new extension category, add a new directory under `extensions/` (e.g., `extensions/performance/`) and place your rule markdown files inside it following the same format.
 
 ---
 
