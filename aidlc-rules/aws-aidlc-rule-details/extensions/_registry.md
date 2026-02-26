@@ -13,10 +13,12 @@ IDE-agnostic skill that generates AI-DLC extensions for any ruleset. For complia
 
 ## How Extensions Work
 
-1. During Workflow Planning, AI scans this directory for extensions
+1. During Workflow Planning, AI scans two locations for extensions:
+   - **Built-in**: `{rule-details-dir}/extensions/` (ships with AI-DLC)
+   - **Generated**: `aidlc-docs/extensions/` (created by extension-generator, IDE-agnostic fixed path)
 2. Extensions are suggested based on project characteristics
 3. User enables/disables as needed
-4. Enabled extensions inject content at their configured stages
+4. Enabled extensions inject content at their configured stages (lazy-loaded per stage, not all at once)
 5. Extensions ADD to core guidance (never replace)
 6. Priority determines application order (lower = earlier)
 7. All compliance extensions include CCM traceability (`ccm-mapping.md`) for cross-framework auditability; non-compliance extensions use their own rule ID schemes

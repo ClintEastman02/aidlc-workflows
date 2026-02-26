@@ -144,7 +144,7 @@ Then standard-specific questions informed by CCM domain mapping: data/assets in 
 
 ### Step 4: Generate Extension
 
-Output at `.aidlc-rule-details/extensions/[category]-[standard-name]/` (lowercase, hyphens).
+Output at `aidlc-docs/extensions/[category]-[standard-name]/` (lowercase, hyphens). This is a fixed, IDE-agnostic location — always the same path regardless of which IDE or AI tool is being used.
 
 **If compliance/security**: Every control in every file MUST include dual references: `[Framework Ref] → CCM [Domain]-[ID]`.
 
@@ -166,7 +166,7 @@ On approval: add to `aidlc-docs/enabled-extensions.md`, log in `audit.md`.
 ### Folder Layout
 
 ```
-.aidlc-rule-details/extensions/[category]-[standard-name]/
+aidlc-docs/extensions/[category]-[standard-name]/
 ├── rule-manifest.yaml    # REQUIRED: metadata, triggers, stage-to-file mapping
 ├── overview.md           # REQUIRED: scope, sources, rule type
 ├── ccm-mapping.md        # IF compliance/security — full framework ↔ CCM crosswalk

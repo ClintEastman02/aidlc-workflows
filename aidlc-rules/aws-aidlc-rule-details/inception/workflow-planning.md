@@ -30,9 +30,10 @@
 **MANDATORY**: Before proceeding with scope analysis, scan for available extensions.
 
 ### 1.5.1 Scan Available Extensions
-1. Read `.aidlc-rule-details/extensions/_registry.md` for the list of available extensions
-2. For each extension in the registry, read its `rule-manifest.yaml` to check trigger conditions against the current project context (project type, requirements keywords, languages detected)
-3. Check if `aidlc-docs/enabled-extensions.md` exists with pre-enabled extensions
+1. Read `{rule-details-dir}/extensions/_registry.md` for built-in extensions
+2. Scan `aidlc-docs/extensions/` for generated extensions (directories containing `rule-manifest.yaml`)
+3. For each extension, read its `rule-manifest.yaml` to check trigger conditions against the current project context (project type, requirements keywords, languages detected)
+4. Check if `aidlc-docs/enabled-extensions.md` exists with pre-enabled extensions
 
 ### 1.5.2 Present Extensions to User
 

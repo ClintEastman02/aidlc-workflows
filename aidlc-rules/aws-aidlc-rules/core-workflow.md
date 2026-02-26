@@ -26,15 +26,22 @@ All subsequent rule detail file references (e.g., `common/process-overview.md`, 
 - Reference these throughout the workflow execution
 
 ## MANDATORY: Extensions Loading
-**CRITICAL**: At workflow start, scan the `extensions/` directory for enabled extensions. **Do NOT load all extension content upfront** — this wastes context window. Instead, use lazy loading:
+**CRITICAL**: At workflow start, scan for enabled extensions in two locations. **Do NOT load all extension content upfront** — this wastes context window. Instead, use lazy loading:
+
+**Extension locations** (scan both, merge results):
+1. **Built-in extensions**: `{rule-details-dir}/extensions/` — ships with AI-DLC (e.g., security-baseline). The `{rule-details-dir}` is whichever path was resolved above (`.aidlc-rule-details/`, `.kiro/aws-aidlc-rule-details/`, or `.amazonq/aws-aidlc-rule-details/`).
+2. **Generated extensions**: `aidlc-docs/extensions/` — created by the extension-generator skill. This is a fixed, IDE-agnostic path that is always the same regardless of which IDE or AI tool is being used.
+
+If the same extension name exists in both locations, the generated version in `aidlc-docs/extensions/` takes precedence (user customizations override built-in).
 
 **Loading process (lightweight scan at startup)**:
-1. Read `extensions/_registry.md` for the list of installed extensions
-2. For each extension directory, read ONLY its `rule-manifest.yaml` (metadata: name, category, rule_type, applies_to stages, priority, tags)
-3. Build an in-memory index: which extensions apply to which stages
-4. Do NOT read any `.md` content files yet — those are loaded on-demand per stage
+1. Read `{rule-details-dir}/extensions/_registry.md` for built-in extensions
+2. Scan `aidlc-docs/extensions/` for generated extension directories (each must contain a `rule-manifest.yaml`)
+3. For each extension, read ONLY its `rule-manifest.yaml` (metadata: name, category, rule_type, applies_to stages, priority, tags)
+4. Build an in-memory index: which extensions apply to which stages
+5. Do NOT read any `.md` content files yet — those are loaded on-demand per stage
 
-**Exception — always-loaded extensions**: Extensions in `extensions/security/baseline/` (the security-baseline rules) are cross-cutting hard constraints that apply to EVERY stage. Load `security-baseline.md` at startup. All other extension content is deferred.
+**Exception — always-loaded extensions**: The security-baseline rules (`{rule-details-dir}/extensions/security/baseline/security-baseline.md`) are cross-cutting hard constraints that apply to EVERY stage. Load at startup. All other extension content is deferred.
 
 **Per-stage content injection (on-demand loading)**:
 1. When entering a stage, check the in-memory index for extensions that have an `applies_to` entry for this stage
@@ -138,7 +145,9 @@ All subsequent rule detail file references (e.g., `common/process-overview.md`, 
 **Purpose**: Discover and enable extensions BEFORE any analysis begins, so all subsequent stages benefit from extension guidance.
 
 **Execution**:
-1. **MANDATORY**: Scan `.aidlc-rule-details/extensions/_registry.md` for available extensions
+1. **MANDATORY**: Scan for extensions in both locations:
+   - Built-in: `{rule-details-dir}/extensions/_registry.md`
+   - Generated: `aidlc-docs/extensions/` (scan for directories containing `rule-manifest.yaml`)
 2. Check if `aidlc-docs/enabled-extensions.md` already exists with pre-enabled extensions
 3. For each extension, read its `rule-manifest.yaml` and check trigger conditions against the user's request and workspace context
 4. Present available extensions to the user:
@@ -574,6 +583,11 @@ The Operations stage will eventually include:
 ├── [project-specific structure]    # Varies by project (see code-generation.md)
 │
 ├── aidlc-docs/                     # 📄 DOCUMENTATION ONLY
+│   ├── extensions/                 # 🔌 GENERATED EXTENSIONS (IDE-agnostic, fixed path)
+│   │   ├── [category]-[name]/      # e.g., compliance-hipaa/, quality-coding-standards/
+│   │   │   ├── rule-manifest.yaml
+│   │   │   ├── overview.md
+│   │   │   └── [stage-files].md
 │   ├── inception/                  # 🔵 INCEPTION PHASE
 │   │   ├── plans/
 │   │   ├── reverse-engineering/    # Brownfield only
