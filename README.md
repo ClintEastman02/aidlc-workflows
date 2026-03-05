@@ -42,11 +42,7 @@ AI-DLC is an intelligent software development workflow that adapts to your needs
 
 ### Kiro
 
-AI-DLC uses [Kiro Steering Files](https://kiro.dev/docs/cli/steering/) within your project workspace. Copy the rules into your project's `.kiro` folder:
-
-1. Create the directories `.kiro/steering` and `.kiro/aws-aidlc-rule-details` in your project root.
-2. Copy `aws-aidlc-rules/` into `.kiro/steering/`.
-3. Copy `aws-aidlc-rule-details/` into `.kiro/`.
+AI-DLC uses [Kiro Steering Files](https://kiro.dev/docs/cli/steering/) within your project workspace.  
 
 The commands below assume you extracted the zip to your `Downloads` folder. If you used a different location, replace `Downloads` with your actual folder path.
 
@@ -94,11 +90,7 @@ Run `kiro-cli`, then `/context show`, and confirm entries for `.kiro/steering/aw
 
 ### Amazon Q Developer IDE Plugin/Extension
 
-AI-DLC uses [Amazon Q Rules](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html) within your project workspace. Copy the rules into your project's `.amazonq` folder:
-
-1. Create the directories `.amazonq/rules` and `.amazonq/aws-aidlc-rule-details` in your project root.
-2. Copy `aws-aidlc-rules/` into `.amazonq/rules/`.
-3. Copy `aws-aidlc-rule-details/` into `.amazonq/`.
+AI-DLC uses [Amazon Q Rules](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html) within your project workspace. 
 
 The commands below assume you extracted the zip to your `Downloads` folder. If you used a different location, replace `Downloads` with your actual folder path.
 
@@ -666,8 +658,10 @@ AGENTS.md
 
 | Resource | Link |
 |----------|------|
-| AI-DLC Methodology Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/) |
 | AI-DLC Method Definition Paper | [Paper](https://prod.d13rzhkk8cj2z0.amplifyapp.com/) |
+| AI-DLC Methodology Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/) |
+| AI-DLC Open-source Launch Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/open-sourcing-adaptive-workflows-for-ai-driven-development-life-cycle-ai-dlc/) |
+| AI-DLC Example Walkthrough Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/building-with-ai-dlc-using-amazon-q-developer/) |
 | Amazon Q Developer Documentation | [Docs](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/q-in-IDE.html) |
 | Kiro CLI Documentation | [Docs](https://kiro.dev/docs/cli/steering/) |
 | Cursor Rules Documentation | [Docs](https://cursor.com/docs/context/rules) |
