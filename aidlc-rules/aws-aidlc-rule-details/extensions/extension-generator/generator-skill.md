@@ -8,28 +8,17 @@ Generates AI-DLC extension folders for any ruleset — compliance frameworks, se
 
 **Context behavior**: This skill loads, generates extension(s), then exits context. It does not persist between stages. If another extension is needed later, the skill is re-invoked fresh.
 
----
-
-## Applicability Check
-
-Before proceeding, confirm with the user:
-
-```markdown
-Would you like to generate extension rules for this project? (Y/N)
-```
-
-If **No** → skip this skill entirely, exit context.
-If **Yes** → proceed to Entry Point selection.
+**Activation**: This skill is gated by `extension-generator.opt-in.md`. It only loads into context when the user opts in during Requirements Analysis.
 
 ---
 
-## Entry Points
+## Entry Point
 
-This skill has two entry points depending on how it is activated.
+When this skill loads, the user has already opted in via one of two paths (A or B from the opt-in prompt). Present the appropriate flow based on their choice.
 
-### Recommended Path (workflow-triggered)
+### Recommended Path (opt-in answer A)
 
-Used when the core workflow triggers this skill with project context already gathered (app type, domain, languages, cloud platform, etc.).
+Used when the user wants the skill to analyze project context and recommend extensions.
 
 1. **Analyze project context** — scan for domain keywords that indicate applicable extensions:
    - Financial/banking/payments → PCI-DSS, SOC 2
@@ -58,9 +47,9 @@ C) Skip extension generation entirely
 4. **If B** → user modifies the list, then proceed to generation for the final set.
 5. **If C** → record choice in `extension-discovery.md`, exit context.
 
-### Manual Path (standalone)
+### Manual Path (opt-in answer B)
 
-Used when the user explicitly invokes the skill mid-project or for custom/unknown rulesets.
+Used when the user knows what they need and wants to specify directly.
 
 ```markdown
 **How would you like to create your extension?**
@@ -137,7 +126,7 @@ Use `[Answer]:` format for all questions.
 
 Use the workspace path detected by the core workflow. If running via Manual Path and no workspace context exists, default to `aidlc-docs/extensions/`. Create the directory if it doesn't exist.
 
-Output at `aidlc-docs/extensions/[category]-[standard-name]/` (lowercase, hyphens).
+Output at `aidlc-docs/extensions/[category]/[standard-name]/` (lowercase, hyphens).
 
 **If compliance/security**: Load `ccm-reference.md` and follow the CCM Resolution Steps. Every control in every file MUST include dual references: `[Framework Ref] → CCM [Domain]-[ID]`.
 
@@ -186,7 +175,7 @@ On approval, generation is complete. Skill exits context.
 ### Folder Layout
 
 ```
-aidlc-docs/extensions/[category]-[standard-name]/
+aidlc-docs/extensions/[category]/[standard-name]/
 ├── rule-manifest.yaml    # REQUIRED: metadata, triggers, stage-to-file mapping
 ├── overview.md           # REQUIRED: scope, sources, rule type
 ├── ccm-mapping.md        # IF compliance/security — full framework ↔ CCM crosswalk
@@ -204,7 +193,7 @@ Only generate files for selected phases. Manifest MUST only reference files that
 ### `rule-manifest.yaml`
 
 ```yaml
-name: "[category]-[standard-name]"
+name: "[standard-name]"
 version: "1.0.0"
 displayName: "[Standard/Ruleset] Guidelines"
 description: "[One sentence]"
@@ -341,7 +330,7 @@ All stage files follow this single pattern. Substitute `{STAGE}` and `{CONTENT_T
 - **Incomplete user docs**: Clarifying questions → map what exists → note gaps.
 - **Contradictory user docs**: Flag, ask precedence, document resolution.
 - **Non-compliance rules**: No CCM mapping, no `ccm-reference.md` load. Generate directly using the user's own rule IDs and categories. Still follow the universal template structure.
-- **Mixed input** (compliance + non-compliance): Split into separate extensions by type. Example: user provides HIPAA rules + coding style guide → generate `compliance-hipaa/` (with CCM) + `quality-coding-standards/` (without CCM).
+- **Mixed input** (compliance + non-compliance): Split into separate extensions by type. Example: user provides HIPAA rules + coding style guide → generate `compliance/hipaa/` (with CCM) + `quality/coding-standards/` (without CCM).
 - **Re-invocation**: Read `extension-discovery.md` to see what already exists before recommending or generating.
 
 ---
