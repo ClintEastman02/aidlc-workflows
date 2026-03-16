@@ -1,6 +1,6 @@
 # Extension Generator — Opt-In
 
-**Extension**: Extension Generator Skill
+**Extension**: Extension Generator Extension
 
 ## Opt-In Prompt
 

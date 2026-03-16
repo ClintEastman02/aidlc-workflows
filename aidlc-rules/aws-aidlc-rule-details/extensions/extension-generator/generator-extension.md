@@ -1,24 +1,24 @@
-# Extension Generator Skill
+# Extension Generator Extension
 
-**Skill**: extension-generator v1.0.0 | **One-time per invocation** | **IDE-Agnostic**
+**Extension**: extension-generator v1.0.0 | **One-time per invocation** | **IDE-Agnostic**
 
 ## Purpose
 
 Generates AI-DLC extension folders for any ruleset — compliance frameworks, security standards, coding conventions, business rules, team processes, or anything else. For security/compliance/privacy rules, loads `ccm-reference.md` and uses CSA CCM v4.1 as the normalization layer. For non-compliance rules, generates directly without CCM overhead.
 
-**Context behavior**: This skill loads, generates extension(s), then exits context. It does not persist between stages. If another extension is needed later, the skill is re-invoked fresh.
+**Context behavior**: This extension loads, generates extension(s), then exits context. It does not persist between stages. If another extension is needed later, the extension is re-invoked fresh.
 
-**Activation**: This skill is gated by `extension-generator.opt-in.md`. It only loads into context when the user opts in during Requirements Analysis.
+**Activation**: This extension is gated by `extension-generator.opt-in.md`. It only loads into context when the user opts in during Requirements Analysis.
 
 ---
 
 ## Entry Point
 
-When this skill loads, the user has already opted in via one of two paths (A or B from the opt-in prompt). Present the appropriate flow based on their choice.
+When this extension loads, the user has already opted in via one of two paths (A or B from the opt-in prompt). Present the appropriate flow based on their choice.
 
 ### Recommended Path (opt-in answer A)
 
-Used when the user wants the skill to analyze project context and recommend extensions.
+Used when the user wants the extension to analyze project context and recommend extensions.
 
 1. **Analyze project context** — scan for domain keywords that indicate applicable extensions:
    - Financial/banking/payments → PCI-DSS, SOC 2
@@ -145,7 +145,7 @@ After generation, create or update `aidlc-docs/extensions/extension-discovery.md
 - **Generated on**: [date]
 
 ## Recommendations
-[What the skill recommended and why]
+[What the extension recommended and why]
 
 ## User Choice
 [A/B/C and any modifications]
@@ -159,14 +159,14 @@ After generation, create or update `aidlc-docs/extensions/extension-discovery.md
 [Extensions added via Manual Path after initial generation]
 ```
 
-Update this file each time the skill runs — append to Generated Extensions or Manual Additions as appropriate.
+Update this file each time the extension runs — append to Generated Extensions or Manual Additions as appropriate.
 
 ### Review
 
 Show: file list, phases covered, strictness level, sources used. If compliance: CCM domains covered.
 Offer: **approve** / **change** / **discard**.
 
-On approval, generation is complete. Skill exits context.
+On approval, generation is complete. Extension exits context.
 
 ---
 

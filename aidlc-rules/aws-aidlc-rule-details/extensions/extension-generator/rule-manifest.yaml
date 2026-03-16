@@ -1,7 +1,7 @@
 name: "extension-generator"
 version: "1.0.0"
-displayName: "Extension Generator Skill"
-description: "IDE-agnostic skill that generates AI-DLC extensions for any ruleset — compliance frameworks via CCM v4.1 normalization, plus coding standards, business rules, architecture patterns, and team processes without CCM overhead"
+displayName: "Extension Generator Extension"
+description: "IDE-agnostic extension that generates AI-DLC extensions for any ruleset — compliance frameworks via CCM v4.1 normalization, plus coding standards, business rules, architecture patterns, and team processes without CCM overhead"
 author: "AI-DLC Team"
 category: "process"
 
@@ -14,10 +14,10 @@ triggers:
 applies_to:
   inception:
     - stage: "workflow-planning"
-      file: "generator-skill.md"
+      file: "generator-extension.md"
       action: "append"
 
 priority: 5
 conflicts_with: []
 depends_on: []
-tags: ["generator", "skill", "ide-agnostic"]
+tags: ["generator", "extension", "ide-agnostic"]
